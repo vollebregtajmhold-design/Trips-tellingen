@@ -77,7 +77,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.7</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.8</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <main>
@@ -153,7 +153,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='1.7';
+const VERSIE='1.8';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
@@ -236,9 +236,12 @@ function standaardRegels(){
 
 /* ---------- Gegevens ---------- */
 function regels(){
+  // per vak telt alleen de laatste wijziging (toevoegen of weghalen), op welk apparaat ook
+  const laatst={};
+  db.kolommen.forEach(k=>{const c=key(k);if(!laatst[c]||(k.ts||0)>(laatst[c].ts||0))laatst[c]=k});
   const m={};
-  db.kolommen.filter(k=>!k.del).forEach(k=>m[key(k)]=k);
-  db.entries.filter(e=>!e.del).forEach(e=>{if(!m[key(e)])m[key(e)]={locatie:e.locatie,afdeling:e.afdeling,vak:e.vak,afgeleid:true}});
+  Object.entries(laatst).forEach(([c,k])=>{if(!k.del)m[c]=k});
+  db.entries.filter(e=>!e.del).forEach(e=>{const c=key(e);if(!m[c]&&!laatst[c])m[c]={locatie:e.locatie,afdeling:e.afdeling,vak:e.vak,afgeleid:true}});
   return Object.values(m).sort((a,b)=>cmp(a.locatie,b.locatie)||cmp(kaal(a.afdeling),kaal(b.afdeling))||cmp(kaal(a.vak),kaal(b.vak)));
 }
 function vervangenOud(d){const n=db.notities.find(x=>x.id==='n_'+d);return !!(n&&!n.del&&n.vervangen)}
@@ -415,8 +418,10 @@ $('k_add').onclick=()=>{
 $('k_lijst').onclick=ev=>{
   const id=ev.target.dataset.kol;if(!id)return;
   const k=db.kolommen.find(x=>x.id===id);
-  if(!confirm(`Regel ${label(k)} weghalen? (Tellingen blijven bewaard.)`))return;
-  k.del=true;k.ts=Date.now();bewaarLokaal();render();later();
+  if(!confirm(`Regel ${label(k)} weghalen?`))return;
+  const c=key(k),nu=Date.now();
+  db.kolommen.filter(x=>key(x)===c).forEach(x=>{x.del=true;x.ts=nu});
+  bewaarLokaal();render();later();
 };
 $('csv').onclick=()=>{
   const rs=regels().filter(k=>!$('f_loc').value||k.locatie===$('f_loc').value);
