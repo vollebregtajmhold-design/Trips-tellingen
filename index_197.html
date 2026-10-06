@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trips tellingen</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f6b4a">
+<meta name="apple-mobile-web-app-title" content="Trips">
+<style>
+:root{--bg:#6b7078;--card:#f4efe6;--tx:#1d2420;--mut:#6b6f68;--ac:#2f6b4a;--ac2:#d4e8dc;--bd:#cfc8bb;--hd:#b9b9b9;--red:#c0392b;--or:#e2622b;--tot:#e6f4ee;--bar:#f1ebe1;--blauw:#d6e6fb;--blauwr:#2f6fd0;--roze:#e6007e}
+*{box-sizing:border-box}
+:root{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--ac);color:#fff}
+header .small{color:#cfe3d6}
+header #status{color:#e3f0e8}
+header .ib{background:var(--ac2);border:1px solid #fff;color:var(--ac)}
+h1{font-size:17px;margin:0}
+.hr{display:flex;align-items:center;gap:8px}
+#status{font-size:12px;color:var(--mut);text-align:right}
+.ib{background:none;border:1px solid var(--bd);border-radius:9px;padding:5px 9px;font-size:17px;cursor:pointer;color:var(--tx)}
+main{padding:0 10px 30px}
+.toolbar{background:var(--bar);border-bottom:1px solid var(--bd);padding:6px 12px}
+#instellingen{margin:12px auto;max-width:900px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--tx);font-size:16px;width:100%}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}
+.bar select{width:auto;padding:7px 9px}
+.btn{padding:10px 14px;border:0;border-radius:9px;background:var(--ac);color:#fff;font-size:15px;cursor:pointer}
+.btn.sec{background:var(--ac2);color:var(--tx)}
+.btn.rood{background:none;color:var(--red);border:1px solid var(--red)}
+.seg{display:flex;border:1px solid var(--bd);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--tx);padding:8px 11px;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--ac);color:#fff}
+.geheim{-webkit-text-security:disc;font-family:monospace}
+.small{font-size:12px;color:var(--mut)}
+#instellingen{display:none}#instellingen.on{display:block}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;max-width:1100px;margin:0 auto}
+.ctl .bar{margin:0}
+.schuif{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;max-width:420px}
+.schuif span{font-size:13px;color:var(--mut)}
+.schuif input{flex:1;padding:0;border:0;background:none;accent-color:var(--ac);height:28px}
+.schuif b{min-width:26px;text-align:right}
+@media (max-width:480px){.tw{margin:10px auto}.m th,.m td{min-width:44px;padding:6px 4px;font-size:14px}.schuif{max-width:none}.bar{gap:6px}.seg button{padding:7px 9px;font-size:13px}.bar select,.btn{font-size:14px;padding:8px 10px}.m .sd{padding:6px 6px}}
+/* matrix */
+.tw{overflow:auto;max-height:78vh;width:fit-content;max-width:100%;margin:18px auto 8px;background:var(--card);border-top:4px solid var(--blauwr);border-left:4px solid #7ab648;border-bottom:4px solid var(--roze);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+body.vol .tw{max-height:calc(100vh - 150px)}
+main>p.small{text-align:center;color:#e8e8e8}
+table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-numeric:tabular-nums}
+.m th,.m td{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:7px 6px;text-align:center;white-space:nowrap;min-width:52px}
+.m thead th{position:sticky;top:0;background:var(--hd);z-index:2;font-weight:700}
+.m thead th.nu{background:#fff;color:var(--tx)}
+.m td.nu{background-color:var(--blauw)}
+.m tr.hl td,.m td.hl{background-color:var(--blauw)!important}
+.m .sd{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;font-weight:700;padding:6px 8px}
+.m thead .sd{z-index:3;background:var(--hd)}
+.m td.c{cursor:pointer;font-weight:700;color:#1d2420}
+.m td.c.leeg{color:var(--mut);font-weight:400}
+.m td.c:hover{outline:2px solid var(--ac);outline-offset:-2px}
+.m td.c b{display:inline-block;border:2px solid var(--or);border-radius:5px;padding:0 4px;font-weight:700}
+.m td.c b.opm{border-color:#d4001a}
+.m tr.sep td{border-top:2px solid var(--mut)}
+.m tr.tot td{background:var(--tot);font-weight:700;color:var(--tx);cursor:default}
+.m tr.tot td.sd{background:var(--tot)}
+/* venster */
+#venster{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;z-index:10}
+#venster.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:440px;border-radius:0 0 16px 16px;padding:12px 16px 16px;max-height:100%;overflow:auto}
+.sheet .drie input{font-size:20px;padding:8px}
+.sheet .vak{font-size:18px}
+@media (min-width:600px){#venster{align-items:flex-start;padding-top:8vh}.sheet{border-radius:16px}}
+.kop{display:flex;justify-content:space-between;align-items:center}
+.kop b{font-size:18px}
+.tag{display:inline-block;background:var(--ac2);border-radius:7px;padding:4px 9px;margin:6px 6px 0 0;font-size:14px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px}
+.chk input{width:auto}
+.knoppen{display:flex;gap:8px;margin-top:14px}
+.knoppen .btn{flex:1}
+.drie{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.vak{padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--ac2);font-size:16px;text-align:center;min-height:42px}
+.vak.groot{font-weight:700;color:var(--ac)}
+.drie input{text-align:center;font-weight:600}
+.hint{background:var(--ac2);padding:7px 10px;border-radius:8px;font-size:13px;margin-top:10px}
+.warn{color:var(--red);font-size:13px;margin-top:4px}
+.kl{width:100%;border-collapse:collapse;font-size:14px}
+.kl td{padding:4px 6px;border-bottom:1px solid var(--bd)}
+.del{background:none;border:0;color:var(--red);cursor:pointer;font-size:15px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.5</span></h1>
+  <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
+</header>
+<div class="toolbar">
+<div class="ctl">
+<div class="bar">
+  <div class="seg" id="modus">
+    <button data-m="stand" class="on">Stand</button>
+    <button data-m="erbij">Erbij</button>
+    <button data-m="dag">Per dag</button>
+  </div>
+  <select id="f_loc"></select>
+  <label class="chk" style="margin:0;color:var(--tx)"><input type="checkbox" id="f_kleur"> Kleuren</label>
+  <button class="btn sec" id="csv">⬇ CSV</button>
+</div>
+<div class="schuif">
+  <span>Weken</span>
+  <input type="range" id="f_weken" min="1" max="13" value="2">
+  <b id="f_wn">2</b>
+</div>
+</div>
+</div>
+<main>
+
+<div class="card" id="instellingen">
+  <b>GitHub</b>
+  <div class="row">
+    <div><label>Gebruiker</label><input id="c_owner" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_owner"></div>
+    <div><label>Repository</label><input id="c_repo" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_repo"></div>
+    <div><label>Branch</label><input id="c_branch" value="main"></div>
+    <div><label>Bestand</label><input id="c_path" value="data.json"></div>
+  </div>
+  <label>Token (alleen nodig om op te slaan)</label><input id="c_token" type="text" class="geheim" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="gh_tok" data-lpignore="true" data-1p-ignore>
+  <p><button class="btn" id="bewaar">Bewaren en verbinden</button>
+     <button class="btn sec" id="koppel">📱 Telefoon koppelen</button></p>
+  <div id="qrvak" hidden>
+    <p class="small">Scan deze code met de camera van je telefoon. De app opent en is meteen gekoppeld.</p>
+    <div id="qr" style="background:#fff;padding:12px;display:inline-block;border-radius:8px"></div>
+    <p class="small">Laat deze code aan niemand anders zien: er zit je token in.</p>
+  </div>
+  <hr style="border:0;border-top:1px solid var(--bd)">
+  <b>Regels (vakken)</b>
+  <div class="row">
+    <div><label>Locatie</label><input id="k_loc" placeholder="207"></div>
+    <div><label>Afdeling</label><input id="k_afd" placeholder="2" inputmode="numeric"></div>
+    <div><label>Vak</label><input id="k_vak" placeholder="1" inputmode="numeric"></div>
+    <div style="align-self:end"><button class="btn" id="k_add" style="width:100%">+ Regel</button></div>
+  </div>
+  <div id="k_lijst" style="margin-top:10px"></div>
+</div>
+
+<div class="tw" id="matrix"></div>
+<p class="small">Klik op een vakje om een telling in te voeren of te wijzigen. Rode rand = opmerking (houd de muis erop om te lezen). Oranje rand = vangplaat vervangen.</p>
+</main>
+
+<div id="venster">
+  <div class="sheet">
+    <div class="kop"><b id="v_titel">Telling</b><button class="ib" id="v_sluit">✕</button></div>
+    <div id="v_tags"></div>
+    <div class="drie">
+      <div><label>Vorige stand</label><div class="vak" id="v_vorig">–</div></div>
+      <div><label>Stand nu</label><input id="v_aantal" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off"></div>
+      <div><label>Telling</label><div class="vak groot" id="v_tel">–</div></div>
+    </div>
+    <div id="v_vorige" class="small" style="margin-top:4px"></div>
+    <label>Datum</label><input type="date" id="v_datum">
+    <div id="v_warn" class="warn" hidden></div>
+    <label class="chk"><input type="checkbox" id="v_vv"> Vangplaat vervangen na deze telling</label>
+    <label>Opmerking</label><input id="v_opm" type="text" inputmode="text" enterkeyhint="done" autocomplete="off">
+    <div class="knoppen">
+      <button class="btn rood" id="v_del" hidden>Verwijderen</button>
+      <button class="btn" id="v_ok">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const VERSIE='2.5';
+const LS_DATA='tel_data',LS_CFG='tel_cfg';
+const $=id=>document.getElementById(id);
+const F=['locatie','afdeling','vak'];
+let db=Object.assign({entries:[],kolommen:[],notities:[]},lsGet(LS_DATA)||{});
+let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:''},lsGet(LS_CFG)||{});
+let kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
+
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function bewaarLokaal(){lsSet(LS_DATA,db)}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function today(){return new Date().toLocaleDateString('sv-SE')}
+function nlDate(d){const[y,m,a]=d.split('-');return `${+a}-${+m}-${y}`}
+function days(a,b){return Math.round((Date.parse(b)-Date.parse(a))/864e5)}
+function fmt(n,d){return n==null||isNaN(n)?'':Number(n).toLocaleString('nl-NL',{maximumFractionDigits:d})}
+function setStatus(t){$('status').textContent=t}
+function kaal(s){return String(s||'').replace(/^(afd|afdeling|vak)\s*/i,'').trim()}
+function key(e){return [e.locatie,kaal(e.afdeling),kaal(e.vak)].map(x=>String(x||'').trim().toLowerCase()).join('|')}
+function label(k){return `${k.locatie}-${kaal(k.afdeling)}-${kaal(k.vak)}`}
+function cmp(a,b){return String(a).localeCompare(String(b),'nl',{numeric:true})}
+/* weeknummers: yw = jaar*100+week (ISO) */
+function ywVan(ds){const d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7)+3);const y=d.getUTCFullYear(),j=new Date(Date.UTC(y,0,4));const w=1+Math.round(((d-j)/864e5-3+((j.getUTCDay()+6)%7))/7);return y*100+w}
+function ywKort(yw){return String(yw).slice(2)}
+function maandagVan(yw){const y=Math.floor(yw/100),w=yw%100,j=new Date(Date.UTC(y,0,4));j.setUTCDate(j.getUTCDate()-((j.getUTCDay()+6)%7)+(w-1)*7);return j.toISOString().slice(0,10)}
+function plusDagen(ds,n){const d=new Date(ds+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+function ywVanEntry(e){return e.yw||ywVan(e.datum)}
+
+/* ---------- GitHub ---------- */
+function b64enc(s){const b=new TextEncoder().encode(s);let x='';for(let i=0;i<b.length;i+=8192)x+=String.fromCharCode(...b.subarray(i,i+8192));return btoa(x)}
+function b64dec(s){const x=atob(s.replace(/\s/g,''));return new TextDecoder().decode(Uint8Array.from(x,c=>c.charCodeAt(0)))}
+function ghUrl(){return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`}
+function ghHead(acc){const h={Accept:acc||'application/vnd.github+json'};if(cfg.token)h.Authorization='Bearer '+cfg.token;return h}
+async function ghGet(){
+  const q='?ref='+encodeURIComponent(cfg.branch)+'&t='+Date.now();
+  const r=await fetch(ghUrl()+q,{headers:ghHead(),cache:'no-store'});
+  if(r.status===404)return{sha:null,data:{}};
+  if(r.status===401){$('instellingen').classList.add('on');throw new Error('token klopt niet – plak het opnieuw bij ⚙')}
+  if(!r.ok)throw new Error('lezen mislukt ('+r.status+')');
+  const j=await r.json();let txt;
+  if(j.content)txt=b64dec(j.content);
+  else{const r2=await fetch(ghUrl()+q,{headers:ghHead('application/vnd.github.raw+json'),cache:'no-store'});txt=await r2.text()}
+  return{sha:j.sha,data:txt.trim()?JSON.parse(txt):{}};
+}
+async function ghPut(data,sha){
+  const body={message:'Tellingen bijgewerkt',content:b64enc(JSON.stringify(data)),branch:cfg.branch};
+  if(sha)body.sha=sha;
+  const r=await fetch(ghUrl(),{method:'PUT',headers:Object.assign(ghHead(),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok){const e=new Error(r.status===403||r.status===404?'geen schrijfrecht – zet bij het token Contents op Read and write':'opslaan mislukt ('+r.status+')');e.status=r.status;throw e}
+}
+function merge(a,b){const m={};[...(a||[]),...(b||[])].forEach(e=>{if(!m[e.id]||(e.ts||0)>(m[e.id].ts||0))m[e.id]=e});return Object.values(m)}
+function sig(d){return JSON.stringify(['entries','kolommen','notities'].map(k=>[...(d[k]||[])].sort((x,y)=>x.id<y.id?-1:1)))}
+function later(){setStatus('Nog niet verstuurd…');clearTimeout(timer);timer=setTimeout(sync,1500)}
+async function sync(){
+  if(bezig){nogEens=true;return}
+  if(!cfg.owner||!cfg.repo){setStatus('Alleen op dit apparaat');standaardRegels();render();return}
+  bezig=true;setStatus('Bezig…');
+  try{
+    let msg='✓ '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+    for(let i=0;i<3;i++){
+      const rem=await ghGet(),rd=rem.data;
+      const m={entries:merge(rd.entries,db.entries),kolommen:merge(rd.kolommen,db.kolommen),notities:merge(rd.notities,db.notities)};
+      db=m;bewaarLokaal();
+      if(sig(m)===sig(rd))break;
+      if(!cfg.token){msg='Alleen lezen';break}
+      try{await ghPut(m,rem.sha);break}
+      catch(e){if((e.status===409||e.status===422)&&i<2)continue;throw e}
+    }
+    setStatus(msg);
+    if(standaardRegels())later();
+  }catch(e){setStatus('⚠ '+e.message)}
+  bezig=false;render();
+  if(nogEens){nogEens=false;sync()}
+}
+function standaardRegels(){
+  if(db.kolommen.length||db.entries.length)return false;
+  [['207',[1,2,3,4,5]],['250',[2,3,4,5,6]]].forEach(([l,afd])=>afd.forEach(a=>[1,2].forEach(v=>db.kolommen.push({id:uid(),ts:Date.now(),locatie:l,afdeling:String(a),vak:String(v)}))));
+  bewaarLokaal();return true;
+}
+
+/* ---------- Gegevens ---------- */
+function regels(){
+  // per vak telt alleen de laatste wijziging (toevoegen of weghalen), op welk apparaat ook
+  const laatst={};
+  db.kolommen.forEach(k=>{const c=key(k);if(!laatst[c]||(k.ts||0)>(laatst[c].ts||0))laatst[c]=k});
+  const m={};
+  Object.entries(laatst).forEach(([c,k])=>{if(!k.del)m[c]=k});
+  db.entries.filter(e=>!e.del).forEach(e=>{const c=key(e);if(!m[c]&&!laatst[c])m[c]={locatie:e.locatie,afdeling:e.afdeling,vak:e.vak,afgeleid:true}});
+  return Object.values(m).sort((a,b)=>cmp(a.locatie,b.locatie)||cmp(kaal(a.afdeling),kaal(b.afdeling))||cmp(kaal(a.vak),kaal(b.vak)));
+}
+function vervangenOud(d){const n=db.notities.find(x=>x.id==='n_'+d);return !!(n&&!n.del&&n.vervangen)}
+function cellen(){ // laatste telling per week + vak
+  const m={};
+  db.entries.filter(e=>!e.del).forEach(e=>{const c=ywVanEntry(e)+'#'+key(e);if(!m[c]||e.ts>m[c].ts)m[c]=e});
+  return m;
+}
+function bereken(c){
+  const per={},res={};
+  Object.values(c).forEach(e=>(per[key(e)]=per[key(e)]||[]).push(e));
+  Object.values(per).forEach(l=>{
+    l.sort((a,b)=>a.datum.localeCompare(b.datum)||ywVanEntry(a)-ywVanEntry(b));
+    let p=null;
+    l.forEach(e=>{
+      const r={aantal:e.aantal,erbij:e.aantal,dag:null,vorige:p};
+      if(p){
+        const basis=(p.vervangen||vervangenOud(p.datum))?0:p.aantal;
+        r.erbij=e.aantal-basis;if(r.erbij<0)r.erbij=e.aantal;
+        const dg=days(p.datum,e.datum);r.dag=dg>0?r.erbij/dg:null;
+      }
+      res[e.id]=r;p=e;
+    });
+  });
+  return res;
+}
+function schuifMax(){ // aantal weken vanaf de eerste telling tot nu (minstens 13)
+  const nu=ywVan(today()),ys=db.entries.filter(e=>!e.del).map(ywVanEntry);
+  if(!ys.length)return 13;
+  const n=Math.round(days(maandagVan(Math.min(...ys,nu)),maandagVan(nu))/7)+1;
+  return Math.max(13,n);
+}
+function weken(){
+  const s=$('f_weken');s.max=schuifMax();
+  const n=Math.min(+s.value,+s.max);$('f_wn').textContent=n;
+  const nu=ywVan(today()),start=plusDagen(maandagVan(nu),-(n-1)*7);
+  const l=[];for(let d=start;ywVan(d)<=nu;d=plusDagen(d,7))l.push(ywVan(d));
+  return l;
+}
+
+/* ---------- Matrix ---------- */
+function kleur(v,max){
+  if(v==null||!kleuren)return '';
+  const t=max>0?Math.min(1,v/max):0,g=[200,228,206],w=[244,239,230],r=[240,170,155];
+  const [a,b,u]=t<.5?[g,w,t/.5]:[w,r,(t-.5)/.5];
+  return `background:rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*u)).join(',')})`;
+}
+function waarde(e,res){if(!e)return null;const r=res[e.id];return modus==='stand'?e.aantal:modus==='erbij'?r.erbij:r.dag}
+function vulFilter(){
+  const locs=[...new Set(regels().map(k=>k.locatie))],f=$('f_loc'),c=f.value;
+  f.innerHTML='<option value="">Alle locaties</option>'+locs.map(l=>`<option${l===c?' selected':''}>${esc(l)}</option>`).join('');
+}
+function render(){
+  vulFilter();renderRegelLijst();
+  const rs=regels().filter(k=>!$('f_loc').value||k.locatie===$('f_loc').value);
+  const ws=weken(),nu=ywVan(today()),c=cellen(),res=bereken(c),dec=modus==='dag'?1:0;
+  const vals=[];rs.forEach(k=>ws.forEach(w=>{const v=waarde(c[w+'#'+key(k)],res);if(v>0)vals.push(v)}));
+  vals.sort((a,b)=>a-b);const max=vals.length?Math.max(1,vals[Math.floor(vals.length*.9)]):1;
+  let h='<table class="m"><thead><tr><th class="sd">Vak</th>'+ws.map(w=>`<th${w===nu?' class="nu"':''}>${ywKort(w)}</th>`).join('')+'</tr></thead><tbody>';
+  const tot={},locTot={};let vorigeLoc=null;
+  const locs=[...new Set(rs.map(k=>k.locatie))];
+  rs.forEach(k=>{
+    h+=`<tr${vorigeLoc!==null&&vorigeLoc!==k.locatie?' class="sep"':''}><td class="sd">${esc(label(k))}</td>`;
+    vorigeLoc=k.locatie;
+    ws.forEach(w=>{
+      const e=c[w+'#'+key(k)],v=waarde(e,res);
+      if(v!=null){tot[w]=(tot[w]||0)+v;locTot[k.locatie+w]=(locTot[k.locatie+w]||0)+v}
+      const mark=e&&(e.opm||e.vervangen);
+      const txt=v==null?(e?'·':'—'):fmt(v,dec);
+      h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b${e.opm?' class="opm"':''}>${txt}</b>`:txt}</td>`;
+    });
+    h+='</tr>';
+  });
+  if(locs.length>1)locs.forEach((l,i)=>{h+=`<tr class="tot${i===0?' sep':''}"><td class="sd">Totaal ${esc(l)}</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(locTot[l+w],dec)||'—'}</td>`).join('')+'</tr>'});
+  h+=`<tr class="tot${locs.length>1?'':' sep'}"><td class="sd">Totaal</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(tot[w],dec)||'—'}</td>`).join('')+'</tr>';
+  h+='</tbody></table>';
+  const box=$('matrix'),sx=box.scrollLeft,sy=box.scrollTop;
+  box.innerHTML=rs.length?h:'<p class="small" style="padding:12px">Nog geen regels. Voeg ze toe bij ⚙.</p>';
+  if(scrollRechts){box.scrollLeft=box.scrollWidth;scrollRechts=false}else{box.scrollLeft=sx;box.scrollTop=sy}
+}
+function renderRegelLijst(){
+  const k=regels();
+  $('k_lijst').innerHTML=k.length?'<table class="kl">'+k.map(x=>`<tr><td>${esc(label(x))}</td><td style="text-align:right">${x.afgeleid?'<span class="small">uit tellingen</span>':`<button class="del" data-kol="${x.id}">✕</button>`}</td></tr>`).join('')+'</table>':'<p class="small">Nog geen regels.</p>';
+}
+
+/* ---------- Invoervenster ---------- */
+function openVenster(k,w){
+  const regel=regels().find(x=>key(x)===k);if(!regel)return;
+  const c=cellen(),e=c[w+'#'+k],res=bereken(c);
+  open={regel,w,e};
+  $('v_titel').textContent=e?'Telling wijzigen':'Nieuwe telling';
+  $('v_tags').innerHTML=`<span class="tag">Week ${ywKort(w)}</span><span class="tag">Loc ${esc(regel.locatie)}</span><span class="tag">Afd ${esc(kaal(regel.afdeling))}</span><span class="tag">Vak ${esc(kaal(regel.vak))}</span>`;
+  $('v_datum').value=standaardDatum(e,w,c);
+  $('v_aantal').value=e?e.aantal:'';
+  $('v_vv').checked=!!(e&&e.vervangen);
+  $('v_opm').value=e?e.opm||'':'';
+  $('v_del').hidden=!e;
+  // vorige stand
+  const eerder=Object.values(c).filter(x=>key(x)===k&&ywVanEntry(x)<w).sort((a,b)=>ywVanEntry(b)-ywVanEntry(a))[0];
+  const vh=$('v_vorige');
+  if(eerder){
+    const vv=eerder.vervangen||vervangenOud(eerder.datum);
+    open.basis=vv?0:eerder.aantal;
+    $('v_vorig').textContent=fmt(open.basis,1);
+    vh.textContent=`Vorige telling: week ${ywKort(ywVanEntry(eerder))} (${nlDate(eerder.datum)}), stand ${fmt(eerder.aantal,1)}`+(vv?' – vangplaat toen vervangen, dus nu vanaf 0':'');
+  }else{
+    open.basis=0;$('v_vorig').textContent='0';
+    vh.textContent='Eerste telling voor dit vak. De vangplaat begint op 0.';
+  }
+  rekenTelling();
+  checkDatum();
+  $('venster').classList.add('on');
+  const st=$('v_aantal');st.focus();try{st.select()}catch(e){}
+  $('venster').scrollTop=0;
+}
+function checkDatum(){
+  const d=$('v_datum').value,el=$('v_warn');
+  if(open&&d&&ywVan(d)!==open.w){el.hidden=false;el.textContent=`Let op: deze datum valt in week ${ywKort(ywVan(d))}.`}else el.hidden=true;
+}
+function standaardDatum(e,w,c){
+  if(e)return e.datum;                                  // al ingevuld: eigen datum
+  const zelfdeWeek=Object.values(c).filter(x=>ywVanEntry(x)===w).sort((a,b)=>b.ts-a.ts)[0];
+  if(zelfdeWeek)return zelfdeWeek.datum;                // andere vakken in deze week: zelfde datum
+  if(w===ywVan(today()))return today();                 // huidige week: vandaag
+  return plusDagen(maandagVan(w),2);                    // oude week: woensdag
+}
+function rekenTelling(){
+  const raw=$('v_aantal').value.trim().replace(',','.'),n=Number(raw),el=$('v_tel');
+  if(!open||raw===''||isNaN(n)){el.textContent='–';el.style.color='';return}
+  let t=n-open.basis;
+  if(t<0){el.textContent=fmt(n,1);el.style.color='var(--red)';el.title='Stand is lager dan vorige keer: gerekend als nieuwe vangplaat';return}
+  el.style.color='';el.title='';el.textContent=fmt(t,1);
+}
+$('v_aantal').addEventListener('input',rekenTelling);
+function sluit(){$('venster').classList.remove('on');open=null}
+$('v_datum').addEventListener('input',checkDatum);
+$('v_sluit').onclick=sluit;
+$('venster').addEventListener('click',ev=>{if(ev.target.id==='venster')sluit()});
+document.addEventListener('keydown',ev=>{if(!open)return;if(ev.key==='Escape')sluit();if(ev.key==='Enter'&&ev.target.tagName==='INPUT')$('v_ok').click()});
+$('v_ok').onclick=()=>{
+  const d=$('v_datum').value,raw=$('v_aantal').value.trim().replace(',','.'),n=Number(raw);
+  if(!d){alert('Vul een datum in.');return}
+  if(raw===''||isNaN(n)||n<0){alert('Vul een geldig aantal in.');$('v_aantal').focus();return}
+  const {regel,w,e}=open,nu=Date.now();
+  const velden={datum:d,yw:w,aantal:n,vervangen:$('v_vv').checked,opm:$('v_opm').value.trim()};
+  if(e)Object.assign(e,velden,{ts:nu});
+  else db.entries.push(Object.assign({id:uid(),ts:nu,locatie:regel.locatie,afdeling:kaal(regel.afdeling),vak:kaal(regel.vak)},velden));
+  bewaarLokaal();sluit();render();later();
+};
+$('v_del').onclick=()=>{
+  if(!open||!open.e||!confirm('Deze telling verwijderen?'))return;
+  const k=key(open.e),w=open.w,nu=Date.now();
+  db.entries.filter(x=>!x.del&&key(x)===k&&ywVanEntry(x)===w).forEach(x=>{x.del=true;x.ts=nu});
+  bewaarLokaal();sluit();render();later();
+};
+$('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(td)openVenster(td.dataset.k,+td.dataset.w)});
+
+/* ---------- Overige acties ---------- */
+$('modus').onclick=ev=>{const m=ev.target.dataset.m;if(!m)return;modus=m;document.querySelectorAll('#modus button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()};
+$('f_loc').onchange=render;
+$('f_kleur').onchange=()=>{kleuren=$('f_kleur').checked;try{localStorage.setItem('tel_kleur2',kleuren?'1':'0')}catch(e){}render()};
+try{kleuren=localStorage.getItem('tel_kleur2')!=='0'}catch(e){}
+$('f_kleur').checked=kleuren;
+// rij en kolom oplichten onder de muis
+$('matrix').addEventListener('mouseover',ev=>{
+  const td=ev.target.closest('td');$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
+  if(!td||!td.classList.contains('c'))return;
+  td.parentElement.classList.add('hl');
+  $('matrix').querySelectorAll(`td.c[data-w="${td.dataset.w}"]`).forEach(x=>x.classList.add('hl'));
+});
+$('matrix').addEventListener('mouseleave',()=>$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl')));
+$('f_weken').oninput=()=>{scrollRechts=true;render()};
+$('ververs').onclick=sync;
+$('tandwiel').onclick=()=>$('instellingen').classList.toggle('on');
+$('bewaar').onclick=()=>{
+  ['owner','repo','branch','path','token'].forEach(k=>cfg[k]=$('c_'+k).value.replace(/\s+/g,''));
+  if(!cfg.branch)cfg.branch='main';if(!cfg.path)cfg.path='data.json';
+  lsSet(LS_CFG,cfg);$('instellingen').classList.remove('on');sync();
+};
+$('k_add').onclick=()=>{
+  const k={id:uid(),ts:Date.now(),locatie:$('k_loc').value.trim(),afdeling:kaal($('k_afd').value),vak:kaal($('k_vak').value)};
+  if(!k.locatie||!k.afdeling||!k.vak){alert('Vul locatie, afdeling en vak in.');return}
+  if(regels().some(x=>key(x)===key(k))){alert('Deze regel bestaat al.');return}
+  db.kolommen.push(k);bewaarLokaal();$('k_vak').value='';render();later();
+};
+$('k_lijst').onclick=ev=>{
+  const id=ev.target.dataset.kol;if(!id)return;
+  const k=db.kolommen.find(x=>x.id===id);
+  if(!confirm(`Regel ${label(k)} weghalen?`))return;
+  const c=key(k),nu=Date.now();
+  db.kolommen.filter(x=>key(x)===c).forEach(x=>{x.del=true;x.ts=nu});
+  bewaarLokaal();render();later();
+};
+$('csv').onclick=()=>{
+  const rs=regels().filter(k=>!$('f_loc').value||k.locatie===$('f_loc').value);
+  const ws=weken(),c=cellen(),res=bereken(c);
+  const n=v=>v==null?'':String(Math.round(v*100)/100).replace('.',',');
+  let t='Vak;'+ws.map(ywKort).join(';')+'\n';
+  rs.forEach(k=>t+=label(k)+';'+ws.map(w=>n(waarde(c[w+'#'+key(k)],res))).join(';')+'\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=`trips-${modus}.csv`;a.click();
+};
+
+/* ---------- Telefoon koppelen ---------- */
+$('koppel').onclick=()=>{
+  if(!cfg.owner||!cfg.repo||!cfg.token){alert('Vul eerst je GitHub-gegevens en token in en klik op "Bewaren en verbinden".');return}
+  const link=location.origin+location.pathname+'#k='+encodeURIComponent(btoa(JSON.stringify(cfg)));
+  const v=$('qrvak'),q=$('qr');
+  if(!v.hidden){v.hidden=true;q.innerHTML='';return}
+  q.innerHTML='';v.hidden=false;
+  try{new QRCode(q,{text:link,width:260,height:260,correctLevel:QRCode.CorrectLevel.L})}
+  catch(e){q.textContent='QR-code kon niet worden gemaakt.'}
+};
+function leesKoppeling(){
+  const m=location.hash.match(/^#k=(.+)$/);if(!m)return;
+  try{const c=JSON.parse(atob(decodeURIComponent(m[1])));if(c.owner&&c.repo){cfg=Object.assign(cfg,c);lsSet(LS_CFG,cfg);setStatus('Gekoppeld ✓')}}catch(e){}
+  history.replaceState(null,'',location.pathname); // link met token uit adresbalk halen
+}
+function standaardRepo(){ // op github.io: gebruiker en repo uit het adres halen
+  const h=location.hostname.match(/^(.+)\.github\.io$/);if(!h)return;
+  if(!cfg.owner)cfg.owner=h[1];
+  if(!cfg.repo){const r=location.pathname.split('/').filter(Boolean)[0];if(r&&!/\.html$/.test(r))cfg.repo=r}
+}
+
+/* ---------- Volledig scherm ---------- */
+(function(){
+  const el=document.documentElement,b=$('vol');
+  const kan=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!kan)return;            // bv. iPhone: kan geen volledig scherm
+  b.hidden=false;
+  const isVol=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  b.onclick=()=>{
+    if(isVol())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  };
+  const upd=()=>{const v=isVol();b.textContent=v?'⤡':'⛶';b.title=v?'Terug naar normaal':'Volledig scherm';document.body.classList.toggle('vol',v)};
+  document.addEventListener('fullscreenchange',upd);document.addEventListener('webkitfullscreenchange',upd);
+})();
+
+/* ---------- Nieuwe versie? ---------- */
+async function checkVersie(){
+  if(!/^https?:/.test(location.protocol))return;
+  try{
+    const r=await fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'});
+    const t=await r.text(),m=t.match(/const VERSIE='([^']+)'/);
+    if(m&&m[1]!==VERSIE){
+      const k='tel_reload_'+m[1];
+      try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1')}catch(e){}
+      location.replace(location.pathname+'?v='+encodeURIComponent(m[1]));
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkVersie()});
+
+/* ---------- Start ---------- */
+leesKoppeling();standaardRepo();
+['owner','repo','branch','path','token'].forEach(k=>$('c_'+k).value=cfg[k]);
+if(!cfg.owner||!cfg.repo)$('instellingen').classList.add('on');
+$('c_owner').value=cfg.owner;$('c_repo').value=cfg.repo;
+render();sync();checkVersie();
+</script>
+</body>
+</html>
