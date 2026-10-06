@@ -60,7 +60,8 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 .m td.c{cursor:pointer;font-weight:700;color:#1d2420}
 .m td.c.leeg{color:var(--mut);font-weight:400}
 .m td.c:hover{outline:2px solid var(--ac);outline-offset:-2px}
-.m td.c b{display:inline-block;border:2px solid var(--or);border-radius:5px;padding:0 4px;font-weight:600}
+.m td.c b{display:inline-block;border:2px solid var(--or);border-radius:5px;padding:0 4px;font-weight:700}
+.m td.c b.opm{border-color:#d4001a}
 .m tr.sep td{border-top:2px solid var(--mut)}
 .m tr.tot td{background:var(--tot);font-weight:700;color:var(--tx);cursor:default}
 .m tr.tot td.sd{background:var(--tot)}
@@ -89,7 +90,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.0</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.3</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <div class="toolbar">
@@ -141,7 +142,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 </div>
 
 <div class="tw" id="matrix"></div>
-<p class="small">Klik op een vakje om een telling in te voeren of te wijzigen. Oranje rand = opmerking of val vervangen.</p>
+<p class="small">Klik op een vakje om een telling in te voeren of te wijzigen. Rode rand = opmerking (houd de muis erop om te lezen). Oranje rand = vangplaat vervangen.</p>
 </main>
 
 <div id="venster">
@@ -156,7 +157,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
       <div><label>Telling</label><div class="vak groot" id="v_tel">–</div></div>
     </div>
     <div id="v_vorige" class="small" style="margin-top:4px"></div>
-    <label class="chk"><input type="checkbox" id="v_vv"> Val vervangen na deze telling</label>
+    <label class="chk"><input type="checkbox" id="v_vv"> Vangplaat vervangen na deze telling</label>
     <label>Opmerking</label><input id="v_opm" autocomplete="off">
     <div class="knoppen">
       <button class="btn rood" id="v_del" hidden>Verwijderen</button>
@@ -167,13 +168,13 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='2.0';
+const VERSIE='2.3';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
 let db=Object.assign({entries:[],kolommen:[],notities:[]},lsGet(LS_DATA)||{});
 let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:''},lsGet(LS_CFG)||{});
-let kleuren=false,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
+let kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -325,7 +326,7 @@ function render(){
       if(v!=null){tot[w]=(tot[w]||0)+v;locTot[k.locatie+w]=(locTot[k.locatie+w]||0)+v}
       const mark=e&&(e.opm||e.vervangen);
       const txt=v==null?(e?'·':'—'):fmt(v,dec);
-      h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b>${txt}</b>`:txt}</td>`;
+      h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b${e.opm?' class="opm"':''}>${txt}</b>`:txt}</td>`;
     });
     h+='</tr>';
   });
@@ -360,10 +361,10 @@ function openVenster(k,w){
     const vv=eerder.vervangen||vervangenOud(eerder.datum);
     open.basis=vv?0:eerder.aantal;
     $('v_vorig').textContent=fmt(open.basis,1);
-    vh.textContent=`Vorige telling: week ${ywKort(ywVanEntry(eerder))} (${nlDate(eerder.datum)}), stand ${fmt(eerder.aantal,1)}`+(vv?' – val toen vervangen, dus nu vanaf 0':'');
+    vh.textContent=`Vorige telling: week ${ywKort(ywVanEntry(eerder))} (${nlDate(eerder.datum)}), stand ${fmt(eerder.aantal,1)}`+(vv?' – vangplaat toen vervangen, dus nu vanaf 0':'');
   }else{
     open.basis=0;$('v_vorig').textContent='0';
-    vh.textContent='Eerste telling voor dit vak. De val begint op 0.';
+    vh.textContent='Eerste telling voor dit vak. De vangplaat begint op 0.';
   }
   rekenTelling();
   checkDatum();
@@ -385,7 +386,7 @@ function rekenTelling(){
   const raw=$('v_aantal').value.trim().replace(',','.'),n=Number(raw),el=$('v_tel');
   if(!open||raw===''||isNaN(n)){el.textContent='–';el.style.color='';return}
   let t=n-open.basis;
-  if(t<0){el.textContent=fmt(n,1);el.style.color='var(--red)';el.title='Stand is lager dan vorige keer: gerekend als nieuwe val';return}
+  if(t<0){el.textContent=fmt(n,1);el.style.color='var(--red)';el.title='Stand is lager dan vorige keer: gerekend als nieuwe vangplaat';return}
   el.style.color='';el.title='';el.textContent=fmt(t,1);
 }
 $('v_aantal').addEventListener('input',rekenTelling);
@@ -415,8 +416,9 @@ $('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(
 /* ---------- Overige acties ---------- */
 $('modus').onclick=ev=>{const m=ev.target.dataset.m;if(!m)return;modus=m;document.querySelectorAll('#modus button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()};
 $('f_loc').onchange=render;
-$('f_kleur').onchange=()=>{kleuren=$('f_kleur').checked;try{localStorage.setItem('tel_kleur',kleuren?'1':'')}catch(e){}render()};
-try{kleuren=!!localStorage.getItem('tel_kleur');$('f_kleur').checked=kleuren}catch(e){}
+$('f_kleur').onchange=()=>{kleuren=$('f_kleur').checked;try{localStorage.setItem('tel_kleur2',kleuren?'1':'0')}catch(e){}render()};
+try{kleuren=localStorage.getItem('tel_kleur2')!=='0'}catch(e){}
+$('f_kleur').checked=kleuren;
 // rij en kolom oplichten onder de muis
 $('matrix').addEventListener('mouseover',ev=>{
   const td=ev.target.closest('td');$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
