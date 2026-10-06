@@ -2,12 +2,13 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trips tellingen</title>
 <style>
 :root{--bg:#f3f1ea;--card:#fbfaf6;--tx:#1d2420;--mut:#6b6f68;--ac:#2f7d4f;--ac2:#e3efe6;--bd:#cfccc2;--hd:#b9b7b0;--red:#c0392b;--or:#e2622b;--tot:#e6f2ee}
-@media (prefers-color-scheme:dark){:root{--bg:#151816;--card:#1d211e;--tx:#e8ece8;--mut:#9aa49d;--ac:#5cb27e;--ac2:#24372b;--bd:#343a35;--hd:#3a403b;--red:#ff8a80;--or:#ff8a50;--tot:#22322b}}
 *{box-sizing:border-box}
+:root{color-scheme:light}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--bd)}
 h1{font-size:17px;margin:0}
@@ -76,7 +77,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.5</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.6</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <main>
