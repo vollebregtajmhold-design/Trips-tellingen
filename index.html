@@ -3,24 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Trips tellingen</title>
 <style>
-:root{--bg:#f3f1ea;--card:#fbfaf6;--tx:#1d2420;--mut:#6b6f68;--ac:#2f7d4f;--ac2:#e3efe6;--bd:#cfccc2;--hd:#b9b7b0;--red:#c0392b;--or:#e2622b;--tot:#e6f2ee}
+:root{--bg:#6b7078;--card:#f4efe6;--tx:#1d2420;--mut:#6b6f68;--ac:#2f6b4a;--ac2:#d4e8dc;--bd:#cfc8bb;--hd:#b9b9b9;--red:#c0392b;--or:#e2622b;--tot:#e6f4ee;--bar:#f1ebe1;--blauw:#d6e6fb;--blauwr:#2f6fd0;--roze:#e6007e}
 *{box-sizing:border-box}
 :root{color-scheme:light}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--bd)}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--ac);color:#fff}
+header .small{color:#cfe3d6}
+header #status{color:#e3f0e8}
+header .ib{background:var(--ac2);border:1px solid #fff;color:var(--ac)}
 h1{font-size:17px;margin:0}
 .hr{display:flex;align-items:center;gap:8px}
 #status{font-size:12px;color:var(--mut);text-align:right}
 .ib{background:none;border:1px solid var(--bd);border-radius:9px;padding:5px 9px;font-size:17px;cursor:pointer;color:var(--tx)}
 main{padding:0 10px 30px}
+.toolbar{background:var(--bar);border-bottom:1px solid var(--bd);padding:6px 12px}
+#instellingen{margin:12px auto;max-width:900px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
 label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
-input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font-size:16px;width:100%}
+input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--tx);font-size:16px;width:100%}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}
-.bar select{width:auto}
+.bar select{width:auto;padding:7px 9px}
 .btn{padding:10px 14px;border:0;border-radius:9px;background:var(--ac);color:#fff;font-size:15px;cursor:pointer}
 .btn.sec{background:var(--ac2);color:var(--tx)}
 .btn.rood{background:none;color:var(--red);border:1px solid var(--red)}
@@ -31,21 +38,26 @@ input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background
 .small{font-size:12px;color:var(--mut)}
 #instellingen{display:none}#instellingen.on{display:block}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ctl{display:inline-flex;flex-direction:column;max-width:100%}
-.schuif{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px 12px;margin-bottom:8px}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;max-width:1100px;margin:0 auto}
+.ctl .bar{margin:0}
+.schuif{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;max-width:420px}
 .schuif span{font-size:13px;color:var(--mut)}
 .schuif input{flex:1;padding:0;border:0;background:none;accent-color:var(--ac);height:28px}
 .schuif b{min-width:26px;text-align:right}
-@media (max-width:480px){.bar{gap:6px}.seg button{padding:7px 9px;font-size:13px}.bar select,.btn{font-size:14px;padding:8px 10px}.m .sd{padding:6px 6px}}
+@media (max-width:480px){.tw{margin:10px auto}.m th,.m td{min-width:44px;padding:6px 4px;font-size:14px}.schuif{max-width:none}.bar{gap:6px}.seg button{padding:7px 9px;font-size:13px}.bar select,.btn{font-size:14px;padding:8px 10px}.m .sd{padding:6px 6px}}
 /* matrix */
-.tw{overflow:auto;max-height:80vh;border:2px solid var(--bd);border-radius:6px;background:var(--card)}
-table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-numeric:tabular-nums}
-.m th,.m td{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:6px 4px;text-align:center;white-space:nowrap;min-width:42px}
+.tw{overflow:auto;max-height:78vh;width:fit-content;max-width:100%;margin:18px auto 8px;background:var(--card);border-top:4px solid var(--blauwr);border-left:4px solid #7ab648;border-bottom:4px solid var(--roze);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+body.vol .tw{max-height:calc(100vh - 150px)}
+main>p.small{text-align:center;color:#e8e8e8}
+table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-numeric:tabular-nums}
+.m th,.m td{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:7px 6px;text-align:center;white-space:nowrap;min-width:52px}
 .m thead th{position:sticky;top:0;background:var(--hd);z-index:2;font-weight:700}
-.m thead th.nu{background:var(--ac);color:#fff}
+.m thead th.nu{background:#fff;color:var(--tx)}
+.m td.nu{background-color:var(--blauw)}
+.m tr.hl td,.m td.hl{background-color:var(--blauw)!important}
 .m .sd{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;font-weight:700;padding:6px 8px}
 .m thead .sd{z-index:3;background:var(--hd)}
-.m td.c{cursor:pointer;font-weight:600;color:#1d2420}
+.m td.c{cursor:pointer;font-weight:700;color:#1d2420}
 .m td.c.leeg{color:var(--mut);font-weight:400}
 .m td.c:hover{outline:2px solid var(--ac);outline-offset:-2px}
 .m td.c b{display:inline-block;border:2px solid var(--or);border-radius:5px;padding:0 4px;font-weight:600}
@@ -77,9 +89,28 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.8</span></h1>
-  <div class="hr"><span id="status"></span><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.0</span></h1>
+  <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
+<div class="toolbar">
+<div class="ctl">
+<div class="bar">
+  <div class="seg" id="modus">
+    <button data-m="stand" class="on">Stand</button>
+    <button data-m="erbij">Erbij</button>
+    <button data-m="dag">Per dag</button>
+  </div>
+  <select id="f_loc"></select>
+  <label class="chk" style="margin:0;color:var(--tx)"><input type="checkbox" id="f_kleur"> Kleuren</label>
+  <button class="btn sec" id="csv">⬇ CSV</button>
+</div>
+<div class="schuif">
+  <span>Weken</span>
+  <input type="range" id="f_weken" min="1" max="13" value="2">
+  <b id="f_wn">2</b>
+</div>
+</div>
+</div>
 <main>
 
 <div class="card" id="instellingen">
@@ -109,23 +140,6 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
   <div id="k_lijst" style="margin-top:10px"></div>
 </div>
 
-<div class="ctl">
-<div class="bar">
-  <div class="seg" id="modus">
-    <button data-m="stand" class="on">Stand</button>
-    <button data-m="erbij">Erbij</button>
-    <button data-m="dag">Per dag</button>
-  </div>
-  <select id="f_loc"></select>
-  <button class="btn sec" id="csv">⬇ CSV</button>
-</div>
-<div class="schuif">
-  <span>Weken</span>
-  <input type="range" id="f_weken" min="1" max="13" value="2">
-  <b id="f_wn">2</b>
-</div>
-</div>
-
 <div class="tw" id="matrix"></div>
 <p class="small">Klik op een vakje om een telling in te voeren of te wijzigen. Oranje rand = opmerking of val vervangen.</p>
 </main>
@@ -153,13 +167,13 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='1.8';
+const VERSIE='2.0';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
 let db=Object.assign({entries:[],kolommen:[],notities:[]},lsGet(LS_DATA)||{});
 let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:''},lsGet(LS_CFG)||{});
-let modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
+let kleuren=false,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -284,8 +298,8 @@ function weken(){
 
 /* ---------- Matrix ---------- */
 function kleur(v,max){
-  if(v==null)return '';
-  const t=max>0?Math.min(1,v/max):0,g=[120,198,155],w=[255,255,255],r=[235,135,120];
+  if(v==null||!kleuren)return '';
+  const t=max>0?Math.min(1,v/max):0,g=[200,228,206],w=[244,239,230],r=[240,170,155];
   const [a,b,u]=t<.5?[g,w,t/.5]:[w,r,(t-.5)/.5];
   return `background:rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*u)).join(',')})`;
 }
@@ -311,12 +325,12 @@ function render(){
       if(v!=null){tot[w]=(tot[w]||0)+v;locTot[k.locatie+w]=(locTot[k.locatie+w]||0)+v}
       const mark=e&&(e.opm||e.vervangen);
       const txt=v==null?(e?'·':'—'):fmt(v,dec);
-      h+=`<td class="c${v==null?' leeg':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b>${txt}</b>`:txt}</td>`;
+      h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b>${txt}</b>`:txt}</td>`;
     });
     h+='</tr>';
   });
-  if(locs.length>1)locs.forEach((l,i)=>{h+=`<tr class="tot${i===0?' sep':''}"><td class="sd">Totaal ${esc(l)}</td>`+ws.map(w=>`<td>${fmt(locTot[l+w],dec)||'—'}</td>`).join('')+'</tr>'});
-  h+=`<tr class="tot${locs.length>1?'':' sep'}"><td class="sd">Totaal</td>`+ws.map(w=>`<td>${fmt(tot[w],dec)||'—'}</td>`).join('')+'</tr>';
+  if(locs.length>1)locs.forEach((l,i)=>{h+=`<tr class="tot${i===0?' sep':''}"><td class="sd">Totaal ${esc(l)}</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(locTot[l+w],dec)||'—'}</td>`).join('')+'</tr>'});
+  h+=`<tr class="tot${locs.length>1?'':' sep'}"><td class="sd">Totaal</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(tot[w],dec)||'—'}</td>`).join('')+'</tr>';
   h+='</tbody></table>';
   const box=$('matrix'),sx=box.scrollLeft,sy=box.scrollTop;
   box.innerHTML=rs.length?h:'<p class="small" style="padding:12px">Nog geen regels. Voeg ze toe bij ⚙.</p>';
@@ -401,6 +415,16 @@ $('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(
 /* ---------- Overige acties ---------- */
 $('modus').onclick=ev=>{const m=ev.target.dataset.m;if(!m)return;modus=m;document.querySelectorAll('#modus button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()};
 $('f_loc').onchange=render;
+$('f_kleur').onchange=()=>{kleuren=$('f_kleur').checked;try{localStorage.setItem('tel_kleur',kleuren?'1':'')}catch(e){}render()};
+try{kleuren=!!localStorage.getItem('tel_kleur');$('f_kleur').checked=kleuren}catch(e){}
+// rij en kolom oplichten onder de muis
+$('matrix').addEventListener('mouseover',ev=>{
+  const td=ev.target.closest('td');$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
+  if(!td||!td.classList.contains('c'))return;
+  td.parentElement.classList.add('hl');
+  $('matrix').querySelectorAll(`td.c[data-w="${td.dataset.w}"]`).forEach(x=>x.classList.add('hl'));
+});
+$('matrix').addEventListener('mouseleave',()=>$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl')));
 $('f_weken').oninput=()=>{scrollRechts=true;render()};
 $('ververs').onclick=sync;
 $('tandwiel').onclick=()=>$('instellingen').classList.toggle('on');
@@ -452,6 +476,21 @@ function standaardRepo(){ // op github.io: gebruiker en repo uit het adres halen
   if(!cfg.owner)cfg.owner=h[1];
   if(!cfg.repo){const r=location.pathname.split('/').filter(Boolean)[0];if(r&&!/\.html$/.test(r))cfg.repo=r}
 }
+
+/* ---------- Volledig scherm ---------- */
+(function(){
+  const el=document.documentElement,b=$('vol');
+  const kan=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!kan)return;            // bv. iPhone: kan geen volledig scherm
+  b.hidden=false;
+  const isVol=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+  b.onclick=()=>{
+    if(isVol())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  };
+  const upd=()=>{const v=isVol();b.textContent=v?'⤡':'⛶';b.title=v?'Terug naar normaal':'Volledig scherm';document.body.classList.toggle('vol',v)};
+  document.addEventListener('fullscreenchange',upd);document.addEventListener('webkitfullscreenchange',upd);
+})();
 
 /* ---------- Nieuwe versie? ---------- */
 async function checkVersie(){
