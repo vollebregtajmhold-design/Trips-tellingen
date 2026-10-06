@@ -26,6 +26,7 @@ input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background
 .seg{display:flex;border:1px solid var(--bd);border-radius:9px;overflow:hidden}
 .seg button{border:0;background:var(--card);color:var(--tx);padding:8px 11px;font-size:14px;cursor:pointer}
 .seg button.on{background:var(--ac);color:#fff}
+.geheim{-webkit-text-security:disc;font-family:monospace}
 .small{font-size:12px;color:var(--mut)}
 #instellingen{display:none}#instellingen.on{display:block}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -75,7 +76,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen</h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v1.5</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <main>
@@ -83,13 +84,19 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
 <div class="card" id="instellingen">
   <b>GitHub</b>
   <div class="row">
-    <div><label>Gebruiker</label><input id="c_owner"></div>
-    <div><label>Repository</label><input id="c_repo"></div>
+    <div><label>Gebruiker</label><input id="c_owner" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_owner"></div>
+    <div><label>Repository</label><input id="c_repo" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_repo"></div>
     <div><label>Branch</label><input id="c_branch" value="main"></div>
     <div><label>Bestand</label><input id="c_path" value="data.json"></div>
   </div>
-  <label>Token (alleen nodig om op te slaan)</label><input id="c_token" type="password" autocomplete="off">
-  <p><button class="btn" id="bewaar">Bewaren en verbinden</button></p>
+  <label>Token (alleen nodig om op te slaan)</label><input id="c_token" type="text" class="geheim" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="gh_tok" data-lpignore="true" data-1p-ignore>
+  <p><button class="btn" id="bewaar">Bewaren en verbinden</button>
+     <button class="btn sec" id="koppel">📱 Telefoon koppelen</button></p>
+  <div id="qrvak" hidden>
+    <p class="small">Scan deze code met de camera van je telefoon. De app opent en is meteen gekoppeld.</p>
+    <div id="qr" style="background:#fff;padding:12px;display:inline-block;border-radius:8px"></div>
+    <p class="small">Laat deze code aan niemand anders zien: er zit je token in.</p>
+  </div>
   <hr style="border:0;border-top:1px solid var(--bd)">
   <b>Regels (vakken)</b>
   <div class="row">
@@ -143,6 +150,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:14px;font-variant-nu
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
@@ -181,6 +189,7 @@ async function ghGet(){
   const q='?ref='+encodeURIComponent(cfg.branch)+'&t='+Date.now();
   const r=await fetch(ghUrl()+q,{headers:ghHead(),cache:'no-store'});
   if(r.status===404)return{sha:null,data:{}};
+  if(r.status===401){$('instellingen').classList.add('on');throw new Error('token klopt niet – plak het opnieuw bij ⚙')}
   if(!r.ok)throw new Error('lezen mislukt ('+r.status+')');
   const j=await r.json();let txt;
   if(j.content)txt=b64dec(j.content);
@@ -191,7 +200,7 @@ async function ghPut(data,sha){
   const body={message:'Tellingen bijgewerkt',content:b64enc(JSON.stringify(data)),branch:cfg.branch};
   if(sha)body.sha=sha;
   const r=await fetch(ghUrl(),{method:'PUT',headers:Object.assign(ghHead(),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
-  if(!r.ok){const e=new Error('opslaan mislukt ('+r.status+')');e.status=r.status;throw e}
+  if(!r.ok){const e=new Error(r.status===403||r.status===404?'geen schrijfrecht – zet bij het token Contents op Read and write':'opslaan mislukt ('+r.status+')');e.status=r.status;throw e}
 }
 function merge(a,b){const m={};[...(a||[]),...(b||[])].forEach(e=>{if(!m[e.id]||(e.ts||0)>(m[e.id].ts||0))m[e.id]=e});return Object.values(m)}
 function sig(d){return JSON.stringify(['entries','kolommen','notities'].map(k=>[...(d[k]||[])].sort((x,y)=>x.id<y.id?-1:1)))}
@@ -391,7 +400,7 @@ $('f_weken').oninput=()=>{scrollRechts=true;render()};
 $('ververs').onclick=sync;
 $('tandwiel').onclick=()=>$('instellingen').classList.toggle('on');
 $('bewaar').onclick=()=>{
-  ['owner','repo','branch','path','token'].forEach(k=>cfg[k]=$('c_'+k).value.trim());
+  ['owner','repo','branch','path','token'].forEach(k=>cfg[k]=$('c_'+k).value.replace(/\s+/g,''));
   if(!cfg.branch)cfg.branch='main';if(!cfg.path)cfg.path='data.json';
   lsSet(LS_CFG,cfg);$('instellingen').classList.remove('on');sync();
 };
@@ -416,9 +425,32 @@ $('csv').onclick=()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=`trips-${modus}.csv`;a.click();
 };
 
+/* ---------- Telefoon koppelen ---------- */
+$('koppel').onclick=()=>{
+  if(!cfg.owner||!cfg.repo||!cfg.token){alert('Vul eerst je GitHub-gegevens en token in en klik op "Bewaren en verbinden".');return}
+  const link=location.origin+location.pathname+'#k='+encodeURIComponent(btoa(JSON.stringify(cfg)));
+  const v=$('qrvak'),q=$('qr');
+  if(!v.hidden){v.hidden=true;q.innerHTML='';return}
+  q.innerHTML='';v.hidden=false;
+  try{new QRCode(q,{text:link,width:260,height:260,correctLevel:QRCode.CorrectLevel.L})}
+  catch(e){q.textContent='QR-code kon niet worden gemaakt.'}
+};
+function leesKoppeling(){
+  const m=location.hash.match(/^#k=(.+)$/);if(!m)return;
+  try{const c=JSON.parse(atob(decodeURIComponent(m[1])));if(c.owner&&c.repo){cfg=Object.assign(cfg,c);lsSet(LS_CFG,cfg);setStatus('Gekoppeld ✓')}}catch(e){}
+  history.replaceState(null,'',location.pathname); // link met token uit adresbalk halen
+}
+function standaardRepo(){ // op github.io: gebruiker en repo uit het adres halen
+  const h=location.hostname.match(/^(.+)\.github\.io$/);if(!h)return;
+  if(!cfg.owner)cfg.owner=h[1];
+  if(!cfg.repo){const r=location.pathname.split('/').filter(Boolean)[0];if(r&&!/\.html$/.test(r))cfg.repo=r}
+}
+
 /* ---------- Start ---------- */
+leesKoppeling();standaardRepo();
 ['owner','repo','branch','path','token'].forEach(k=>$('c_'+k).value=cfg[k]);
 if(!cfg.owner||!cfg.repo)$('instellingen').classList.add('on');
+$('c_owner').value=cfg.owner;$('c_repo').value=cfg.repo;
 render();sync();
 </script>
 </body>
