@@ -27,6 +27,8 @@ h1{font-size:17px;margin:0}
 #status{font-size:12px;color:var(--mut);text-align:right}
 .ib{background:none;border:1px solid var(--bd);border-radius:9px;padding:5px 9px;font-size:17px;cursor:pointer;color:var(--tx)}
 main{padding:0 10px 30px}
+#alarm{background:#c0392b;color:#fff;padding:10px 14px;font-weight:600;text-align:center;cursor:pointer}
+#alarm u{white-space:nowrap}
 .toolbar{background:var(--bar);border-bottom:1px solid var(--bd);padding:6px 12px}
 #instellingen{margin:12px auto;max-width:900px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
@@ -98,9 +100,10 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.5</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.6</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
+<div id="alarm" hidden></div>
 <div class="toolbar">
 <div class="ctl">
 <div class="bar">
@@ -176,13 +179,13 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='2.5';
+const VERSIE='2.6';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
 let db=Object.assign({entries:[],kolommen:[],notities:[]},lsGet(LS_DATA)||{});
 let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:''},lsGet(LS_CFG)||{});
-let kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
+let nietVerstuurd=false,kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -229,10 +232,17 @@ async function ghPut(data,sha){
 }
 function merge(a,b){const m={};[...(a||[]),...(b||[])].forEach(e=>{if(!m[e.id]||(e.ts||0)>(m[e.id].ts||0))m[e.id]=e});return Object.values(m)}
 function sig(d){return JSON.stringify(['entries','kolommen','notities'].map(k=>[...(d[k]||[])].sort((x,y)=>x.id<y.id?-1:1)))}
-function later(){setStatus('Nog niet verstuurd…');clearTimeout(timer);timer=setTimeout(sync,1500)}
+function alarm(t){const a=$('alarm');if(t){a.innerHTML=t;a.hidden=false}else a.hidden=true}
+function toonAlarm(){
+  const n=db.entries.filter(e=>!e.del).length;
+  if(!cfg.owner||!cfg.repo){alarm(n?`⚠ Let op: ${n} telling(en) staan alleen op dit toestel. Deze app is niet gekoppeld. <u>Tik hier</u> en koppel via de QR-code.`:'⚠ Deze app is niet gekoppeld. Tellingen worden niet gedeeld. <u>Tik hier</u> om te koppelen.');return}
+  if(nietVerstuurd){alarm('⚠ Let op: tellingen zijn nog niet opgeslagen op GitHub. '+(cfg.token?'Controleer je internet en tik op ↻.':'Er is geen token. <u>Tik hier</u> en koppel via de QR-code.'));return}
+  alarm('');
+}
+function later(){nietVerstuurd=true;toonAlarm();setStatus('Nog niet verstuurd…');clearTimeout(timer);timer=setTimeout(sync,1500)}
 async function sync(){
   if(bezig){nogEens=true;return}
-  if(!cfg.owner||!cfg.repo){setStatus('Alleen op dit apparaat');standaardRegels();render();return}
+  if(!cfg.owner||!cfg.repo){setStatus('Alleen op dit apparaat');standaardRegels();render();toonAlarm();return}
   bezig=true;setStatus('Bezig…');
   try{
     let msg='✓ '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
@@ -240,15 +250,15 @@ async function sync(){
       const rem=await ghGet(),rd=rem.data;
       const m={entries:merge(rd.entries,db.entries),kolommen:merge(rd.kolommen,db.kolommen),notities:merge(rd.notities,db.notities)};
       db=m;bewaarLokaal();
-      if(sig(m)===sig(rd))break;
-      if(!cfg.token){msg='Alleen lezen';break}
-      try{await ghPut(m,rem.sha);break}
+      if(sig(m)===sig(rd)){nietVerstuurd=false;break}
+      if(!cfg.token){msg='Alleen lezen';nietVerstuurd=true;break}
+      try{await ghPut(m,rem.sha);nietVerstuurd=false;break}
       catch(e){if((e.status===409||e.status===422)&&i<2)continue;throw e}
     }
     setStatus(msg);
     if(standaardRegels())later();
-  }catch(e){setStatus('⚠ '+e.message)}
-  bezig=false;render();
+  }catch(e){setStatus('⚠ '+e.message);if(db.entries.length)nietVerstuurd=true}
+  bezig=false;render();toonAlarm();
   if(nogEens){nogEens=false;sync()}
 }
 function standaardRegels(){
@@ -438,6 +448,7 @@ $('matrix').addEventListener('mouseover',ev=>{
 $('matrix').addEventListener('mouseleave',()=>$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl')));
 $('f_weken').oninput=()=>{scrollRechts=true;render()};
 $('ververs').onclick=sync;
+$('alarm').onclick=()=>{$('instellingen').classList.add('on');window.scrollTo(0,0)};
 $('tandwiel').onclick=()=>$('instellingen').classList.toggle('on');
 $('bewaar').onclick=()=>{
   ['owner','repo','branch','path','token'].forEach(k=>cfg[k]=$('c_'+k).value.replace(/\s+/g,''));
@@ -516,7 +527,8 @@ async function checkVersie(){
     }
   }catch(e){}
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkVersie()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkVersie();sync()}});
+setInterval(()=>{if(!document.hidden&&!open)sync()},120000);
 
 /* ---------- Start ---------- */
 leesKoppeling();standaardRepo();
