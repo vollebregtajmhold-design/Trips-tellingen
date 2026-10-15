@@ -30,7 +30,14 @@ main{padding:0 10px 30px}
 #alarm{background:#c0392b;color:#fff;padding:10px 14px;font-weight:600;text-align:center;cursor:pointer}
 #alarm u{white-space:nowrap}
 .toolbar{background:var(--bar);border-bottom:1px solid var(--bd);padding:6px 12px}
-#instellingen{margin:12px auto;max-width:900px}
+#instellingen{margin:12px auto;max-width:700px}
+.kstatus{font-weight:700;font-size:16px;margin-bottom:8px}
+.kstatus.ok{color:var(--ac)}.kstatus.nee{color:var(--red)}
+.paar{display:flex;gap:8px}.paar input{flex:1}.paar .btn{white-space:nowrap}
+#instellingen hr{border:0;border-top:1px solid var(--bd);margin:14px 0}
+#instellingen details>summary{cursor:pointer;font-weight:600;padding:8px 0;color:var(--ac)}
+#beheer{margin-top:14px;border-top:1px solid var(--bd);padding-top:4px}
+#p_msg.fout,#b_msg.fout{color:var(--red)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
 label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 input,select{padding:9px;border:1px solid var(--bd);border-radius:8px;background:#fff;color:var(--tx);font-size:16px;width:100%}
@@ -100,7 +107,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v2.6</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v3.0</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <div id="alarm" hidden></div>
@@ -126,30 +133,61 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 <main>
 
 <div class="card" id="instellingen">
-  <b>GitHub</b>
-  <div class="row">
-    <div><label>Gebruiker</label><input id="c_owner" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_owner"></div>
-    <div><label>Repository</label><input id="c_repo" autocomplete="off" autocapitalize="off" spellcheck="false" name="gh_repo"></div>
-    <div><label>Branch</label><input id="c_branch" value="main"></div>
-    <div><label>Bestand</label><input id="c_path" value="data.json"></div>
+  <div id="kstatus" class="kstatus"></div>
+
+  <div id="koppelblok">
+    <b>Dit apparaat koppelen</b>
+    <p class="small">Vul het wachtwoord in dat je van de beheerder hebt gekregen.</p>
+    <div class="paar"><input id="p_pw" type="text" class="geheim" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Wachtwoord" data-lpignore="true" data-1p-ignore>
+    <button class="btn" id="p_go">Koppelen</button></div>
+    <p class="small" id="p_msg"></p>
   </div>
-  <label>Token (alleen nodig om op te slaan)</label><input id="c_token" type="text" class="geheim" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="gh_tok" data-lpignore="true" data-1p-ignore>
-  <p><button class="btn" id="bewaar">Bewaren en verbinden</button>
-     <button class="btn sec" id="koppel">📱 Telefoon koppelen</button></p>
-  <div id="qrvak" hidden>
-    <p class="small">Scan deze code met de camera van je telefoon. De app opent en is meteen gekoppeld.</p>
-    <div id="qr" style="background:#fff;padding:12px;display:inline-block;border-radius:8px"></div>
-    <p class="small">Laat deze code aan niemand anders zien: er zit je token in.</p>
-  </div>
-  <hr style="border:0;border-top:1px solid var(--bd)">
-  <b>Regels (vakken)</b>
-  <div class="row">
-    <div><label>Locatie</label><input id="k_loc" placeholder="207"></div>
-    <div><label>Afdeling</label><input id="k_afd" placeholder="2" inputmode="numeric"></div>
-    <div><label>Vak</label><input id="k_vak" placeholder="1" inputmode="numeric"></div>
-    <div style="align-self:end"><button class="btn" id="k_add" style="width:100%">+ Regel</button></div>
-  </div>
-  <div id="k_lijst" style="margin-top:10px"></div>
+
+  <details id="beheer">
+    <summary>Beheer (alleen voor de beheerder)</summary>
+
+    <b>Sleutel en wachtwoord</b>
+    <p class="small">Plak hier het GitHub-token en kies een wachtwoord voor je collega's (minstens 8 tekens). Dit doe je maar één keer, en opnieuw als het token verloopt.</p>
+    <label>GitHub-token</label><input id="c_token" type="text" class="geheim" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" name="gh_tok" data-lpignore="true" data-1p-ignore placeholder="github_pat_…">
+    <label>Wachtwoord voor collega's</label><input id="b_pw" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="bijv. tripsvangplaat2026">
+    <p><button class="btn" id="bewaar">Opslaan</button></p>
+    <p class="small" id="b_msg"></p>
+
+    <hr>
+    <b>Andere manieren om te koppelen</b>
+    <p><button class="btn sec" id="koppel">📱 QR-code</button>
+       <button class="btn sec" id="kopieer">🔗 Koppel-link kopiëren</button></p>
+    <div id="linkvak" hidden>
+      <p class="small" id="linkmsg"></p>
+      <input id="linktxt" readonly style="font-size:13px">
+      <p class="small">Laat deze link aan niemand anders zien.</p>
+    </div>
+    <div id="qrvak" hidden>
+      <p class="small">Scan deze code met de camera van de telefoon.</p>
+      <div id="qr" style="background:#fff;padding:12px;display:inline-block;border-radius:8px"></div>
+      <p class="small">Laat deze code aan niemand anders zien.</p>
+    </div>
+
+    <hr>
+    <b>Regels (vakken)</b>
+    <div class="row">
+      <div><label>Locatie</label><input id="k_loc" placeholder="207"></div>
+      <div><label>Afdeling</label><input id="k_afd" placeholder="2" inputmode="numeric"></div>
+      <div><label>Vak</label><input id="k_vak" placeholder="1" inputmode="numeric"></div>
+      <div style="align-self:end"><button class="btn" id="k_add" style="width:100%">+ Regel</button></div>
+    </div>
+    <div id="k_lijst" style="margin-top:10px"></div>
+
+    <details style="margin-top:12px"><summary class="small">Geavanceerd</summary>
+      <div class="row">
+        <div><label>Gebruiker</label><input id="c_owner" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div><label>Repository</label><input id="c_repo" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div><label>Branch</label><input id="c_branch" value="main"></div>
+        <div><label>Bestand</label><input id="c_path" value="data.json"></div>
+      </div>
+      <p><button class="btn sec" id="ontkoppel">Dit apparaat ontkoppelen</button></p>
+    </details>
+  </details>
 </div>
 
 <div class="tw" id="matrix"></div>
@@ -179,13 +217,13 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='2.6';
+const VERSIE='3.0';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
 let db=Object.assign({entries:[],kolommen:[],notities:[]},lsGet(LS_DATA)||{});
-let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:''},lsGet(LS_CFG)||{});
-let nietVerstuurd=false,kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
+let cfg=Object.assign({owner:'',repo:'',branch:'main',path:'data.json',token:'',pw:''},lsGet(LS_CFG)||{});
+let sleutelFout=false,nietVerstuurd=false,kleuren=true,modus='stand',timer=null,bezig=false,nogEens=false,open=null,scrollRechts=true;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -211,53 +249,105 @@ function ywVanEntry(e){return e.yw||ywVan(e.datum)}
 /* ---------- GitHub ---------- */
 function b64enc(s){const b=new TextEncoder().encode(s);let x='';for(let i=0;i<b.length;i+=8192)x+=String.fromCharCode(...b.subarray(i,i+8192));return btoa(x)}
 function b64dec(s){const x=atob(s.replace(/\s/g,''));return new TextDecoder().decode(Uint8Array.from(x,c=>c.charCodeAt(0)))}
-function ghUrl(){return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${cfg.path.split('/').map(encodeURIComponent).join('/')}`}
-function ghHead(acc){const h={Accept:acc||'application/vnd.github+json'};if(cfg.token)h.Authorization='Bearer '+cfg.token;return h}
-async function ghGet(){
+function ghUrl(p){p=p||cfg.path;return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${p.split('/').map(encodeURIComponent).join('/')}`}
+function schoonToken(t){return String(t||'').replace(/[^A-Za-z0-9_]/g,'')}
+function ghHead(acc,zonder){const h={Accept:acc||'application/vnd.github+json'};const t=schoonToken(cfg.token);if(t&&!zonder)h.Authorization='Bearer '+t;return h}
+function fout(t,st){const e=new Error(t);e.status=st;return e}
+async function ghGetFile(p,zonder){ // geeft {sha,text} of null als het bestand niet bestaat
   const q='?ref='+encodeURIComponent(cfg.branch)+'&t='+Date.now();
-  const r=await fetch(ghUrl()+q,{headers:ghHead(),cache:'no-store'});
-  if(r.status===404)return{sha:null,data:{}};
-  if(r.status===401){$('instellingen').classList.add('on');throw new Error('token klopt niet – plak het opnieuw bij ⚙')}
-  if(!r.ok)throw new Error('lezen mislukt ('+r.status+')');
+  const r=await fetch(ghUrl(p)+q,{headers:ghHead(null,zonder),cache:'no-store'});
+  if(r.status===404)return null;
+  if(r.status===401)throw fout('sleutel werkt niet meer',401);
+  if(!r.ok)throw fout('lezen mislukt ('+r.status+')',r.status);
   const j=await r.json();let txt;
   if(j.content)txt=b64dec(j.content);
-  else{const r2=await fetch(ghUrl()+q,{headers:ghHead('application/vnd.github.raw+json'),cache:'no-store'});txt=await r2.text()}
-  return{sha:j.sha,data:txt.trim()?JSON.parse(txt):{}};
+  else{const r2=await fetch(ghUrl(p)+q,{headers:ghHead('application/vnd.github.raw+json',zonder),cache:'no-store'});txt=await r2.text()}
+  return{sha:j.sha,text:txt};
 }
-async function ghPut(data,sha){
-  const body={message:'Tellingen bijgewerkt',content:b64enc(JSON.stringify(data)),branch:cfg.branch};
+async function ghPutFile(p,text,sha,bericht){
+  const body={message:bericht||'Bijgewerkt',content:b64enc(text),branch:cfg.branch};
   if(sha)body.sha=sha;
-  const r=await fetch(ghUrl(),{method:'PUT',headers:Object.assign(ghHead(),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
-  if(!r.ok){const e=new Error(r.status===403||r.status===404?'geen schrijfrecht – zet bij het token Contents op Read and write':'opslaan mislukt ('+r.status+')');e.status=r.status;throw e}
+  const r=await fetch(ghUrl(p),{method:'PUT',headers:Object.assign(ghHead(),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(r.status===401)throw fout('sleutel werkt niet meer',401);
+  if(!r.ok)throw fout(r.status===403||r.status===404?'geen schrijfrecht – zet bij het token Contents op Read and write':'opslaan mislukt ('+r.status+')',r.status);
 }
+async function ghGet(){const f=await ghGetFile(cfg.path);return f?{sha:f.sha,data:f.text.trim()?JSON.parse(f.text):{}}:{sha:null,data:{}}}
+async function ghPut(data,sha){return ghPutFile(cfg.path,JSON.stringify(data),sha,'Tellingen bijgewerkt')}
+
+/* ---------- Wachtwoord-sleutel (versleuteld token in sleutel.json) ---------- */
+const SLEUTEL='sleutel.json';
+const u8=b=>new Uint8Array(b),toB64=b=>btoa(String.fromCharCode(...u8(b))),fromB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function afleiden(pw,salt){
+  const basis=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},basis,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function versleutel(token,pw){
+  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const k=await afleiden(pw,salt);
+  const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(token));
+  return{v:1,salt:toB64(salt),iv:toB64(iv),data:toB64(data)};
+}
+async function ontsleutel(o,pw){
+  const k=await afleiden(pw,fromB64(o.salt));
+  const d=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(o.iv)},k,fromB64(o.data));
+  return new TextDecoder().decode(d);
+}
+async function haalSleutel(pw){ // haalt het token op met het wachtwoord; gooit fout met duidelijke tekst
+  if(!window.crypto||!crypto.subtle)throw fout('Deze browser kan dit niet. Open de app via de normale link (https).');
+  const f=await ghGetFile(SLEUTEL,true);
+  if(!f)throw fout('De beheerder heeft nog geen wachtwoord ingesteld.');
+  let t;try{t=await ontsleutel(JSON.parse(f.text),pw)}catch(e){throw fout('Wachtwoord klopt niet.')}
+  return schoonToken(t);
+}
+let herstelBezig=false;
+async function herstel(){ // sleutel werkt niet meer: nieuwe sleutel ophalen met opgeslagen wachtwoord
+  if(!cfg.pw||herstelBezig)return false;
+  herstelBezig=true;
+  try{const t=await haalSleutel(cfg.pw);if(t&&t!==cfg.token){cfg.token=t;lsSet(LS_CFG,cfg);return true}}catch(e){}
+  finally{herstelBezig=false}
+  return false;
+}
+function gekoppeld(){return !!(cfg.owner&&cfg.repo&&cfg.token)}
+
 function merge(a,b){const m={};[...(a||[]),...(b||[])].forEach(e=>{if(!m[e.id]||(e.ts||0)>(m[e.id].ts||0))m[e.id]=e});return Object.values(m)}
 function sig(d){return JSON.stringify(['entries','kolommen','notities'].map(k=>[...(d[k]||[])].sort((x,y)=>x.id<y.id?-1:1)))}
 function alarm(t){const a=$('alarm');if(t){a.innerHTML=t;a.hidden=false}else a.hidden=true}
 function toonAlarm(){
-  const n=db.entries.filter(e=>!e.del).length;
-  if(!cfg.owner||!cfg.repo){alarm(n?`⚠ Let op: ${n} telling(en) staan alleen op dit toestel. Deze app is niet gekoppeld. <u>Tik hier</u> en koppel via de QR-code.`:'⚠ Deze app is niet gekoppeld. Tellingen worden niet gedeeld. <u>Tik hier</u> om te koppelen.');return}
-  if(nietVerstuurd){alarm('⚠ Let op: tellingen zijn nog niet opgeslagen op GitHub. '+(cfg.token?'Controleer je internet en tik op ↻.':'Er is geen token. <u>Tik hier</u> en koppel via de QR-code.'));return}
+  const n=db.entries.filter(e=>!e.del).length,ks=$('kstatus');
+  ks.className='kstatus '+(gekoppeld()&&!sleutelFout?'ok':'nee');
+  ks.textContent=gekoppeld()?(sleutelFout?'✕ De sleutel werkt niet meer':'✓ Dit apparaat is gekoppeld'):'✕ Dit apparaat is nog niet gekoppeld';
+  $('koppelblok').hidden=gekoppeld()&&!sleutelFout;
+  if(!gekoppeld()){alarm(nietVerstuurd?'⚠ Let op: er staan tellingen alleen op dit toestel. <u>Tik hier</u> en vul het wachtwoord in.':'⚠ Nog niet gekoppeld: je kunt kijken, maar niet opslaan. <u>Tik hier</u> en vul het wachtwoord in.');return}
+  if(sleutelFout){alarm('⚠ De sleutel werkt niet meer. <u>Tik hier</u> en vul het wachtwoord opnieuw in.');return}
+  if(nietVerstuurd){alarm('⚠ Let op: tellingen zijn nog niet opgeslagen. Controleer je internet en tik op ↻.');return}
   alarm('');
 }
 function later(){nietVerstuurd=true;toonAlarm();setStatus('Nog niet verstuurd…');clearTimeout(timer);timer=setTimeout(sync,1500)}
 async function sync(){
   if(bezig){nogEens=true;return}
-  if(!cfg.owner||!cfg.repo){setStatus('Alleen op dit apparaat');standaardRegels();render();toonAlarm();return}
+  if(!cfg.owner||!cfg.repo){setStatus('Niet gekoppeld');standaardRegels();render();toonAlarm();return}
   bezig=true;setStatus('Bezig…');
   try{
-    let msg='✓ '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+    let msg=!cfg.token?'Alleen kijken':'✓ '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
     for(let i=0;i<3;i++){
       const rem=await ghGet(),rd=rem.data;
       const m={entries:merge(rd.entries,db.entries),kolommen:merge(rd.kolommen,db.kolommen),notities:merge(rd.notities,db.notities)};
       db=m;bewaarLokaal();
       if(sig(m)===sig(rd)){nietVerstuurd=false;break}
-      if(!cfg.token){msg='Alleen lezen';nietVerstuurd=true;break}
+      if(!cfg.token){msg='Alleen kijken';nietVerstuurd=true;break}
       try{await ghPut(m,rem.sha);nietVerstuurd=false;break}
       catch(e){if((e.status===409||e.status===422)&&i<2)continue;throw e}
     }
-    setStatus(msg);
+    setStatus(msg);sleutelFout=false;
     if(standaardRegels())later();
-  }catch(e){setStatus('⚠ '+e.message);if(db.entries.length)nietVerstuurd=true}
+  }catch(e){
+    if(e.status===401){
+      bezig=false;
+      if(await herstel()){sleutelFout=false;return sync()}   // nieuwe sleutel gevonden: opnieuw proberen
+      sleutelFout=true;setStatus('⚠ sleutel werkt niet');$('instellingen').classList.add('on');
+    }else setStatus('⚠ '+e.message);
+    if(db.entries.length)nietVerstuurd=true;
+  }
   bezig=false;render();toonAlarm();
   if(nogEens){nogEens=false;sync()}
 }
@@ -430,7 +520,9 @@ $('v_del').onclick=()=>{
   db.entries.filter(x=>!x.del&&key(x)===k&&ywVanEntry(x)===w).forEach(x=>{x.del=true;x.ts=nu});
   bewaarLokaal();sluit();render();later();
 };
-$('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(td)openVenster(td.dataset.k,+td.dataset.w)});
+$('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(!td)return;
+  if(!gekoppeld()||sleutelFout){$('alarm').click();return}   // eerst koppelen, dan pas invoeren
+  openVenster(td.dataset.k,+td.dataset.w)});
 
 /* ---------- Overige acties ---------- */
 $('modus').onclick=ev=>{const m=ev.target.dataset.m;if(!m)return;modus=m;document.querySelectorAll('#modus button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()};
@@ -448,12 +540,53 @@ $('matrix').addEventListener('mouseover',ev=>{
 $('matrix').addEventListener('mouseleave',()=>$('matrix').querySelectorAll('.hl').forEach(x=>x.classList.remove('hl')));
 $('f_weken').oninput=()=>{scrollRechts=true;render()};
 $('ververs').onclick=sync;
-$('alarm').onclick=()=>{$('instellingen').classList.add('on');window.scrollTo(0,0)};
+$('alarm').onclick=()=>{const i=$('instellingen');i.classList.add('on');i.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>{if(!$('koppelblok').hidden)$('p_pw').focus()},300)};
 $('tandwiel').onclick=()=>$('instellingen').classList.toggle('on');
-$('bewaar').onclick=()=>{
-  ['owner','repo','branch','path','token'].forEach(k=>cfg[k]=$('c_'+k).value.replace(/\s+/g,''));
+function msg(id,t,isFout){const m=$(id);m.textContent=t;m.className='small'+(isFout?' fout':'')}
+$('p_go').onclick=async()=>{
+  const pw=$('p_pw').value.trim();if(!pw){msg('p_msg','Vul het wachtwoord in.',true);return}
+  standaardRepo();
+  if(!cfg.owner||!cfg.repo){msg('p_msg','Open de app via de normale link, niet als bestand.',true);return}
+  msg('p_msg','Bezig met koppelen…');$('p_go').disabled=true;
+  try{
+    const t=await haalSleutel(pw);
+    cfg.token=t;cfg.pw=pw;lsSet(LS_CFG,cfg);sleutelFout=false;$('p_pw').value='';
+    msg('p_msg','✓ Gekoppeld!');$('instellingen').classList.remove('on');sync();
+  }catch(e){msg('p_msg',e.message,true)}
+  $('p_go').disabled=false;
+};
+$('p_pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('p_go').click()});
+$('bewaar').onclick=async()=>{
+  ['owner','repo','branch','path'].forEach(k=>{const v=$('c_'+k).value.replace(/\s+/g,'');if(v)cfg[k]=v});
+  if(!cfg.owner||!cfg.repo)standaardRepo();
   if(!cfg.branch)cfg.branch='main';if(!cfg.path)cfg.path='data.json';
-  lsSet(LS_CFG,cfg);$('instellingen').classList.remove('on');sync();
+  const t=schoonToken($('c_token').value),pw=$('b_pw').value.trim();
+  if(t&&!/^(github_pat_|ghp_)/.test(t)){msg('b_msg','Dit lijkt geen goed token. Een token begint met github_pat_ .',true);return}
+  if(pw&&pw.length<8){msg('b_msg','Kies een wachtwoord van minstens 8 tekens.',true);return}
+  if(t)cfg.token=t;
+  if(!cfg.token){msg('b_msg','Plak eerst het GitHub-token.',true);return}
+  lsSet(LS_CFG,cfg);
+  msg('b_msg','Bezig…');
+  try{
+    if(pw){
+      const oud=await ghGetFile(SLEUTEL);
+      await ghPutFile(SLEUTEL,JSON.stringify(await versleutel(cfg.token,pw)),oud&&oud.sha,'Sleutel bijgewerkt');
+      cfg.pw=pw;lsSet(LS_CFG,cfg);
+      msg('b_msg','✓ Opgeslagen. Collega\'s koppelen nu met het wachtwoord: '+pw);
+    }else{
+      await ghGetFile(cfg.path);
+      if(cfg.pw){ // token vernieuwd: sleutel.json bijwerken met hetzelfde wachtwoord
+        const oud=await ghGetFile(SLEUTEL);
+        await ghPutFile(SLEUTEL,JSON.stringify(await versleutel(cfg.token,cfg.pw)),oud&&oud.sha,'Sleutel bijgewerkt');
+        msg('b_msg','✓ Opgeslagen. Alle apparaten krijgen de nieuwe sleutel vanzelf.');
+      }else msg('b_msg','✓ Opgeslagen. Kies ook een wachtwoord voor je collega\'s.');
+    }
+    $('c_token').value='';$('b_pw').value='';sleutelFout=false;sync();
+  }catch(e){msg('b_msg',e.status===401?'Dit token werkt niet. Maak een nieuw token op GitHub.':e.message,true)}
+};
+$('ontkoppel').onclick=()=>{
+  if(!confirm('Dit apparaat ontkoppelen? Tellingen die nog niet verstuurd zijn, gaan verloren.'))return;
+  cfg.token='';cfg.pw='';lsSet(LS_CFG,cfg);sleutelFout=false;toonAlarm();setStatus('Niet gekoppeld');
 };
 $('k_add').onclick=()=>{
   const k={id:uid(),ts:Date.now(),locatie:$('k_loc').value.trim(),afdeling:kaal($('k_afd').value),vak:kaal($('k_vak').value)};
@@ -480,13 +613,21 @@ $('csv').onclick=()=>{
 
 /* ---------- Telefoon koppelen ---------- */
 $('koppel').onclick=()=>{
-  if(!cfg.owner||!cfg.repo||!cfg.token){alert('Vul eerst je GitHub-gegevens en token in en klik op "Bewaren en verbinden".');return}
-  const link=location.origin+location.pathname+'#k='+encodeURIComponent(btoa(JSON.stringify(cfg)));
+  if(!cfg.owner||!cfg.repo||!cfg.token){alert('Dit apparaat is nog niet gekoppeld.');return}
+  const link=koppelLink();
   const v=$('qrvak'),q=$('qr');
   if(!v.hidden){v.hidden=true;q.innerHTML='';return}
   q.innerHTML='';v.hidden=false;
   try{new QRCode(q,{text:link,width:260,height:260,correctLevel:QRCode.CorrectLevel.L})}
   catch(e){q.textContent='QR-code kon niet worden gemaakt.'}
+};
+function koppelLink(){return location.origin+location.pathname+'#k='+encodeURIComponent(btoa(JSON.stringify(cfg)))}
+$('kopieer').onclick=async()=>{
+  if(!cfg.owner||!cfg.repo||!cfg.token){alert('Dit apparaat is nog niet gekoppeld.');return}
+  const l=koppelLink(),v=$('linkvak'),t=$('linktxt'),m=$('linkmsg');
+  v.hidden=false;t.value=l;
+  try{await navigator.clipboard.writeText(l);m.textContent='✓ Gekopieerd! Plak de link in een mail aan jezelf (Ctrl+V) en open hem op de andere computer.'}
+  catch(e){t.focus();t.select();m.textContent='Druk nu op Ctrl+C om de link te kopiëren. Plak hem daarna in een mail aan jezelf.'}
 };
 function leesKoppeling(){
   const m=location.hash.match(/^#k=(.+)$/);if(!m)return;
@@ -531,9 +672,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkVers
 setInterval(()=>{if(!document.hidden&&!open)sync()},120000);
 
 /* ---------- Start ---------- */
-leesKoppeling();standaardRepo();
-['owner','repo','branch','path','token'].forEach(k=>$('c_'+k).value=cfg[k]);
-if(!cfg.owner||!cfg.repo)$('instellingen').classList.add('on');
+leesKoppeling();standaardRepo();cfg.token=schoonToken(cfg.token);
+['owner','repo','branch','path'].forEach(k=>$('c_'+k).value=cfg[k]||'');
+if(!gekoppeld())$('instellingen').classList.add('on');
+toonAlarm();
 $('c_owner').value=cfg.owner;$('c_repo').value=cfg.repo;
 render();sync();checkVersie();
 </script>
