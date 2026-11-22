@@ -78,6 +78,11 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 .m td.c b{display:inline-block;border:2px solid var(--or);border-radius:5px;padding:0 4px;font-weight:700}
 .m td.c b.opm{border-color:#d4001a}
 .m tr.sep td{border-top:2px solid var(--mut)}
+.m .tog{display:inline-block;width:18px;cursor:pointer;color:var(--ac);font-size:13px;user-select:none}
+.m .tog.leeg{visibility:hidden}
+.m tr.grp td.sd{color:var(--ac)}
+.m .aant{font-weight:400;color:var(--mut);font-size:12px}
+.m td.grpc{font-style:normal}
 .m tr.tot td{background:var(--tot);font-weight:700;color:var(--tx);cursor:default}
 .m tr.tot td.sd{background:var(--tot)}
 /* venster */
@@ -107,7 +112,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 </head>
 <body>
 <header>
-  <h1>Trips tellingen <span class="small" style="font-weight:400">v3.0</span></h1>
+  <h1>Trips tellingen <span class="small" style="font-weight:400">v3.1</span></h1>
   <div class="hr"><span id="status"></span><button class="ib" id="vol" title="Volledig scherm" hidden>⛶</button><button class="ib" id="ververs" title="Verversen">↻</button><button class="ib" id="tandwiel" title="Instellingen">⚙</button></div>
 </header>
 <div id="alarm" hidden></div>
@@ -121,6 +126,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
   </div>
   <select id="f_loc"></select>
   <label class="chk" style="margin:0;color:var(--tx)"><input type="checkbox" id="f_kleur"> Kleuren</label>
+  <button class="btn sec" id="f_klap" title="Alle afdelingen in- of uitklappen">⊟ Inklappen</button>
   <button class="btn sec" id="csv">⬇ CSV</button>
 </div>
 <div class="schuif">
@@ -217,7 +223,7 @@ table.m{border-collapse:separate;border-spacing:0;font-size:15px;font-variant-nu
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const VERSIE='3.0';
+const VERSIE='3.1';
 const LS_DATA='tel_data',LS_CFG='tel_cfg';
 const $=id=>document.getElementById(id);
 const F=['locatie','afdeling','vak'];
@@ -417,6 +423,9 @@ function vulFilter(){
   const locs=[...new Set(regels().map(k=>k.locatie))],f=$('f_loc'),c=f.value;
   f.innerHTML='<option value="">Alle locaties</option>'+locs.map(l=>`<option${l===c?' selected':''}>${esc(l)}</option>`).join('');
 }
+let dicht=new Set();try{dicht=new Set(JSON.parse(localStorage.getItem('tel_dicht')||'[]'))}catch(e){}
+function bewaarDicht(){try{localStorage.setItem('tel_dicht',JSON.stringify([...dicht]))}catch(e){}}
+function groepKey(k){return String(k.locatie).trim().toLowerCase()+'|'+kaal(k.afdeling).toLowerCase()}
 function render(){
   vulFilter();renderRegelLijst();
   const rs=regels().filter(k=>!$('f_loc').value||k.locatie===$('f_loc').value);
@@ -426,18 +435,38 @@ function render(){
   let h='<table class="m"><thead><tr><th class="sd">Vak</th>'+ws.map(w=>`<th${w===nu?' class="nu"':''}>${ywKort(w)}</th>`).join('')+'</tr></thead><tbody>';
   const tot={},locTot={};let vorigeLoc=null;
   const locs=[...new Set(rs.map(k=>k.locatie))];
-  rs.forEach(k=>{
-    h+=`<tr${vorigeLoc!==null&&vorigeLoc!==k.locatie?' class="sep"':''}><td class="sd">${esc(label(k))}</td>`;
-    vorigeLoc=k.locatie;
-    ws.forEach(w=>{
-      const e=c[w+'#'+key(k)],v=waarde(e,res);
-      if(v!=null){tot[w]=(tot[w]||0)+v;locTot[k.locatie+w]=(locTot[k.locatie+w]||0)+v}
-      const mark=e&&(e.opm||e.vervangen);
-      const txt=v==null?(e?'·':'—'):fmt(v,dec);
-      h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b${e.opm?' class="opm"':''}>${txt}</b>`:txt}</td>`;
+  // groepeer per afdeling (locatie + afdeling)
+  const groepen=[];rs.forEach(k=>{const g=groepKey(k),l=groepen[groepen.length-1];if(l&&l.g===g)l.rijen.push(k);else groepen.push({g,k,rijen:[k]})});
+  groepen.forEach(gr=>{
+    const sepCls=vorigeLoc!==null&&vorigeLoc!==gr.k.locatie?' sep':'';vorigeLoc=gr.k.locatie;
+    ws.forEach(w=>gr.rijen.forEach(k=>{const v=waarde(c[w+'#'+key(k)],res);if(v!=null){tot[w]=(tot[w]||0)+v;locTot[k.locatie+w]=(locTot[k.locatie+w]||0)+v}}));
+    const meer=gr.rijen.length>1;
+    if(meer&&dicht.has(gr.g)){
+      // ingeklapt: één regel met de som van de vangplaten
+      h+=`<tr class="grp${sepCls}"><td class="sd"><span class="tog" data-tog="${esc(gr.g)}">▸</span> ${esc(gr.k.locatie)}-${esc(kaal(gr.k.afdeling))} <span class="aant">(${gr.rijen.length})</span></td>`;
+      ws.forEach(w=>{
+        let som=null,opm=[],vv=false,iets=false;
+        gr.rijen.forEach(k=>{const e=c[w+'#'+key(k)],v=waarde(e,res);if(e)iets=true;if(v!=null)som=(som||0)+v;if(e&&e.opm)opm.push(label(k)+': '+e.opm);if(e&&e.vervangen)vv=true});
+        const txt=som==null?(iets?'·':'—'):fmt(som,dec);
+        h+=`<td class="c grpc${som==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(som,max*gr.rijen.length)}" data-g="${esc(gr.g)}" data-w="${w}" title="${esc(opm.length?opm.join('\n'):'Tik om uit te klappen')}">${opm.length||vv?`<b${opm.length?' class="opm"':''}>${txt}</b>`:txt}</td>`;
+      });
+      h+='</tr>';return;
+    }
+    gr.rijen.forEach((k,i)=>{
+      const lab=meer?(i===0?`<span class="tog" data-tog="${esc(gr.g)}">▾</span> `:'<span class="tog leeg">▾</span> ')+esc(label(k)):esc(label(k));
+      h+=`<tr${i===0&&sepCls?' class="sep"':''}><td class="sd">${lab}</td>`;
+      ws.forEach(w=>{
+        const e=c[w+'#'+key(k)],v=waarde(e,res);
+        const mark=e&&(e.opm||e.vervangen);
+        const txt=v==null?(e?'·':'—'):fmt(v,dec);
+        h+=`<td class="c${v==null?' leeg':''}${w===nu?' nu':''}" style="${kleur(v,max)}" data-k="${esc(key(k))}" data-w="${w}"${e&&e.opm?` title="${esc(e.opm)}"`:''}>${mark?`<b${e.opm?' class="opm"':''}>${txt}</b>`:txt}</td>`;
+      });
+      h+='</tr>';
     });
-    h+='</tr>';
   });
+  const kunnen=groepen.filter(g=>g.rijen.length>1);
+  $('f_klap').textContent=kunnen.length&&kunnen.every(g=>dicht.has(g.g))?'⊞ Uitklappen':'⊟ Inklappen';
+  $('f_klap').hidden=!kunnen.length;
   if(locs.length>1)locs.forEach((l,i)=>{h+=`<tr class="tot${i===0?' sep':''}"><td class="sd">Totaal ${esc(l)}</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(locTot[l+w],dec)||'—'}</td>`).join('')+'</tr>'});
   h+=`<tr class="tot${locs.length>1?'':' sep'}"><td class="sd">Totaal</td>`+ws.map(w=>`<td${w===nu?' class="nu"':''}>${fmt(tot[w],dec)||'—'}</td>`).join('')+'</tr>';
   h+='</tbody></table>';
@@ -520,13 +549,22 @@ $('v_del').onclick=()=>{
   db.entries.filter(x=>!x.del&&key(x)===k&&ywVanEntry(x)===w).forEach(x=>{x.del=true;x.ts=nu});
   bewaarLokaal();sluit();render();later();
 };
-$('matrix').addEventListener('click',ev=>{const td=ev.target.closest('td.c');if(!td)return;
+$('matrix').addEventListener('click',ev=>{
+  const tg=ev.target.closest('[data-tog]');
+  if(tg){const g=tg.dataset.tog;dicht.has(g)?dicht.delete(g):dicht.add(g);bewaarDicht();render();return}
+  const td=ev.target.closest('td.c');if(!td)return;
+  if(td.dataset.g){dicht.delete(td.dataset.g);bewaarDicht();render();return}   // ingeklapte regel: uitklappen
   if(!gekoppeld()||sleutelFout){$('alarm').click();return}   // eerst koppelen, dan pas invoeren
   openVenster(td.dataset.k,+td.dataset.w)});
 
 /* ---------- Overige acties ---------- */
 $('modus').onclick=ev=>{const m=ev.target.dataset.m;if(!m)return;modus=m;document.querySelectorAll('#modus button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()};
 $('f_loc').onchange=render;
+$('f_klap').onclick=()=>{
+  const gs=[...new Set(regels().map(groepKey))].filter(g=>regels().filter(k=>groepKey(k)===g).length>1);
+  const alles=gs.length&&gs.every(g=>dicht.has(g));
+  gs.forEach(g=>alles?dicht.delete(g):dicht.add(g));bewaarDicht();render();
+};
 $('f_kleur').onchange=()=>{kleuren=$('f_kleur').checked;try{localStorage.setItem('tel_kleur2',kleuren?'1':'0')}catch(e){}render()};
 try{kleuren=localStorage.getItem('tel_kleur2')!=='0'}catch(e){}
 $('f_kleur').checked=kleuren;
